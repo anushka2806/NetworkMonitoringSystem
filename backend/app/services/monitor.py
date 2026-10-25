@@ -33,6 +33,7 @@ def start_monitor():
 def evaluate_clients():
     """Evaluate all clients and update status based on rules"""
     clients = fetch_all("SELECT * FROM clients")
+    # DB timestamps are stored in local time via datetime('now','localtime')
     now = datetime.now()
     
     for client in clients:
@@ -134,7 +135,7 @@ def evaluate_clients():
             
             # Update status
             execute_query(
-                "UPDATE clients SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                "UPDATE clients SET status = ?, updated_at = datetime('now','localtime') WHERE id = ?",
                 (new_status, client_id)
             )
             print(f"[MONITOR] {client['client_name']}: {current_status} -> {new_status} | HB:{int(hb_age)}s TCP:{tcp_connected} Fail:{consec_fail}")

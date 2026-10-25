@@ -20,7 +20,7 @@ def start_udp_server():
                         continue
                     client = fetch_one("SELECT * FROM clients WHERE client_name = ?", (client_name,))
                     if client:
-                        execute_query("UPDATE clients SET last_heartbeat=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?", (client['id'],))
+                        execute_query("UPDATE clients SET last_heartbeat=datetime('now','localtime'), updated_at=datetime('now','localtime') WHERE id=?", (client['id'],))
                         execute_query("INSERT INTO event_history (client_id, event_type, details) VALUES (?, 'HEARTBEAT', ?)", (client['id'], f"UDP heartbeat received from {addr[0]}"))
             except json.JSONDecodeError:
                 continue

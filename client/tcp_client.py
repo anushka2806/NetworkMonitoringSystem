@@ -1,18 +1,35 @@
 import socket
 import json
 import time
-
-SERVER_HOST = '127.0.0.1'
-SERVER_PORT = 5000
+import argparse
 
 def main():
-    client_name = 'lab-pc-01'
-    ip_address = '192.168.1.100'
-    
+    parser = argparse.ArgumentParser(description="TCP client for Network Monitoring System")
+    parser.add_argument('--server', default='127.0.0.1', help="Server IP (default: 127.0.0.1)")
+    parser.add_argument('--port', type=int, default=5000, help="Server TCP port (default: 5000)")
+    parser.add_argument('--name', default=socket.gethostname(), help="Client name (default: this PC's hostname)")
+    parser.add_argument('--ip', default=None, help="IP to report (default: auto-detect)")
+    args = parser.parse_args()
+
+    # Auto-detect this PC's LAN IP if not provided
+    if args.ip:
+        ip_address = args.ip
+    else:
+        try:
+            s_tmp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s_tmp.connect(("8.8.8.8", 80))
+            ip_address = s_tmp.getsockname()[0]
+            s_tmp.close()
+        except Exception:
+            ip_address = '127.0.0.1'
+
+    client_name = args.name
+    print(f"[TCP] Client '{client_name}' ({ip_address}) -> {args.server}:{args.port}")
+
     while True:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((SERVER_HOST, SERVER_PORT))
+            s.connect((args.server, args.port))
             # Register
             reg = {'type': 'REGISTER', 'client_name': client_name, 'ip_address': ip_address}
             s.send(json.dumps(reg).encode('utf-8'))

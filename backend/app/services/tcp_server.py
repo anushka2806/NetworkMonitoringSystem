@@ -40,7 +40,7 @@ def handle_tcp_client(client_sock, addr):
             existing = fetch_one("SELECT * FROM clients WHERE client_name = ?", (client_name,))
             if existing:
                 client_id = existing['id']
-                execute_query("UPDATE clients SET ip_address=?, tcp_connected=1, updated_at=CURRENT_TIMESTAMP WHERE id=?", (ip_address, client_id))
+                execute_query("UPDATE clients SET ip_address=?, tcp_connected=1, updated_at=datetime('now','localtime') WHERE id=?", (ip_address, client_id))
             else:
                 execute_query("INSERT INTO clients (client_name, ip_address, tcp_connected, status) VALUES (?, ?, 1, 'WARNING')", (client_name, ip_address))
                 client = fetch_one("SELECT id FROM clients WHERE client_name = ?", (client_name,))
@@ -66,7 +66,7 @@ def handle_tcp_client(client_sock, addr):
                                 send_time = clients_connections[client_id]['pending'].pop(ts)
                                 rtt_ms = (time.time() - send_time) * 1000
                                 execute_query("INSERT INTO response_time_probe_history (client_id, rtt_ms, success, probe_type) VALUES (?, ?, 1, 'TCP')", (client_id, rtt_ms))
-                                execute_query("UPDATE clients SET last_probe_at=CURRENT_TIMESTAMP, rtt_ms=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (rtt_ms, client_id))
+                                execute_query("UPDATE clients SET last_probe_at=datetime('now','localtime'), rtt_ms=?, updated_at=datetime('now','localtime') WHERE id=?", (rtt_ms, client_id))
                     except:
                         pass
                 except socket.timeout:
@@ -106,7 +106,7 @@ def probe_client(client_id):
                 if client_id in clients_connections and ts in clients_connections[client_id]['pending']:
                     clients_connections[client_id]['pending'].pop(ts)
                     execute_query("INSERT INTO response_time_probe_history (client_id, rtt_ms, success, probe_type) VALUES (?, 0, 0, 'TCP')", (client_id,))
-                    execute_query("UPDATE clients SET last_probe_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?", (client_id,))
+                    execute_query("UPDATE clients SET last_probe_at=datetime('now','localtime'), updated_at=datetime('now','localtime') WHERE id=?", (client_id,))
             except:
                 break
         except Exception as e:

@@ -1,18 +1,35 @@
 import socket
 import json
 import time
+import argparse
 
-SERVER_HOST = '127.0.0.1'
-SERVER_PORT = 5001
 HEARTBEAT_INTERVAL = 5
 
 def main():
-    client_name = 'lab-pc-01'
-    ip_address = '192.168.1.100'
-    
+    parser = argparse.ArgumentParser(description="UDP heartbeat client for Network Monitoring System")
+    parser.add_argument('--server', default='127.0.0.1', help="Server IP (default: 127.0.0.1)")
+    parser.add_argument('--port', type=int, default=5001, help="Server UDP port (default: 5001)")
+    parser.add_argument('--name', default=socket.gethostname(), help="Client name (must match TCP client --name)")
+    parser.add_argument('--ip', default=None, help="IP to report (default: auto-detect)")
+    parser.add_argument('--interval', type=int, default=HEARTBEAT_INTERVAL, help="Heartbeat interval in seconds")
+    args = parser.parse_args()
+
+    # Auto-detect LAN IP
+    if args.ip:
+        ip_address = args.ip
+    else:
+        try:
+            s_tmp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s_tmp.connect(("8.8.8.8", 80))
+            ip_address = s_tmp.getsockname()[0]
+            s_tmp.close()
+        except Exception:
+            ip_address = '127.0.0.1'
+
+    client_name = args.name
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    print(f'[UDP] Sending heartbeats to {SERVER_HOST}:{SERVER_PORT}')
-    
+    print(f"[UDP] Client '{client_name}' ({ip_address}) -> {args.server}:{args.port} every {args.interval}s")
+
     while True:
         try:
             heartbeat = {
@@ -21,12 +38,12 @@ def main():
                 'ip_address': ip_address,
                 'ts': time.time()
             }
-            s.sendto(json.dumps(heartbeat).encode('utf-8'), (SERVER_HOST, SERVER_PORT))
+            s.sendto(json.dumps(heartbeat).encode('utf-8'), (args.server, args.port))
             print(f'[UDP] Heartbeat sent at {time.strftime("%H:%M:%S")}')
-            time.sleep(HEARTBEAT_INTERVAL)
+            time.sleep(args.interval)
         except Exception as e:
             print(f'[UDP] Error: {e}')
-            time.sleep(HEARTBEAT_INTERVAL)
+            time.sleep(args.interval)
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,6 @@
 -- Network Monitoring and Fault Detection System - Database Schema
+-- All TIMESTAMP defaults use local time via (datetime('now','localtime')) so the
+-- dashboard displays values that match the user's wall clock.
 
 -- Clients table: store client names, IP addresses, TCP connection status, last heartbeat
 CREATE TABLE IF NOT EXISTS clients (
@@ -10,15 +12,15 @@ CREATE TABLE IF NOT EXISTS clients (
     last_heartbeat TIMESTAMP,
     last_probe_at TIMESTAMP,
     rtt_ms REAL DEFAULT 0.0,
-    registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    registered_at TIMESTAMP DEFAULT (datetime('now','localtime')),
+    updated_at TIMESTAMP DEFAULT (datetime('now','localtime'))
 );
 
 -- Response time probe history: store RTT/probe history
 CREATE TABLE IF NOT EXISTS response_time_probe_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     client_id INTEGER NOT NULL,
-    probe_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    probe_at TIMESTAMP DEFAULT (datetime('now','localtime')),
     rtt_ms REAL NOT NULL,
     success INTEGER DEFAULT 1,
     probe_type TEXT DEFAULT 'TCP',
@@ -34,7 +36,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     severity TEXT DEFAULT 'MEDIUM',
     status_before TEXT,
     status_after TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    timestamp TIMESTAMP DEFAULT (datetime('now','localtime')),
     acknowledged INTEGER DEFAULT 0,
     FOREIGN KEY (client_id) REFERENCES clients(id)
 );
@@ -45,6 +47,6 @@ CREATE TABLE IF NOT EXISTS event_history (
     client_id INTEGER,
     event_type TEXT NOT NULL,
     details TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    timestamp TIMESTAMP DEFAULT (datetime('now','localtime')),
     FOREIGN KEY (client_id) REFERENCES clients(id)
 );
