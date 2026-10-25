@@ -33,7 +33,7 @@ def start_monitor():
 def evaluate_clients():
     """Evaluate all clients and update status based on rules"""
     clients = fetch_all("SELECT * FROM clients")
-    now = datetime.now()
+    now = datetime.utcnow()
     
     for client in clients:
         client_id = client['id']
